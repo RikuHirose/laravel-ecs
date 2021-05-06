@@ -1,48 +1,39 @@
-version: "3.9"
-
+version: "3.8"
 volumes:
+  php-fpm-socket:
   db-store:
 services:
+  app:
+    build:
+      context: .
+      dockerfile: ./docker/php/Dockerfile
+    volumes:
+      - ./backend:/work/backend
   nginx:
     build:
       context: .
       dockerfile: ./docker/nginx/Dockerfile
     volumes:
-      - ./backend:/var/www/app
+      - ./backend:/work/backend
     ports:
       - 8001:80
     environment:
       PHP_HOST: app
 
-  app:
+  db:
     build:
       context: .
-      dockerfile: docker/php/Dockerfile
-    volumes:
-      - ./backend:/var/www/app
-
-  mysql:
-    image: "mysql:5.7"
-    volumes:
-      - db-store:/var/lib/mysql:delegated
-    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
-    environment:
-      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      dockerfile: ./docker/mysql/Dockerfile
     ports:
-      - 3306
+      - ${DB_PORT:-33307}:3306
+    volumes:
+      - db-store:/var/lib/mysql
+    environment:
+      - MYSQL_DATABASE=${DB_NAME:-xroom_db}
+      - MYSQL_USER=${DB_USER:-user}
+      - MYSQL_PASSWORD=${DB_PASS:-xroom}
+      - MYSQL_ROOT_PASSWORD=${DB_PASS:-xroom}
+    command: --default-authentication-plugin=mysql_native_password
 
-  # datadog:
-  #   image: datadog/agent:latest
-  #   environment:
-  #     - DD_API_KEY=${DD_API_KEY}
-  #     - DD_TAGS=env:${USER}
-  #     - DD_APM_ENABLED=true
-  #   expose:
-  #     - 8126
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock:ro
-  #     - /proc/:/host/proc:ro
-  #     - /sys/fs/cgroup:/host/sys/fs/cgroup:ro
-  #   #XXX: Datadogのログ出力が多すぎるため、ログを破棄
-  #   logging:
-  #     driver: 'none'
+  redis:
+    image: library/redis:6.0.10-alpine

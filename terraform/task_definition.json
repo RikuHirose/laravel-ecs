@@ -1,0 +1,144 @@
+{
+  "family": "xrooms",
+  "containerDefinitions": [
+    {
+      "name": "app",
+      "image": "",
+      "cpu": 128,
+      "memory": 256,
+      "portMappings": [
+        {
+          "containerPort": 9000,
+          "hostPort": 9000,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-region": "ap-northeast-1",
+          "awslogs-group": "/xrooms/ecs",
+          "awslogs-stream-prefix": "app"
+        }
+      },
+      "secrets": [
+        {
+          "name": "APP_KEY",
+          "valueFrom": "/xrooms/app/key"
+        },
+        {
+          "name": "DB_USERNAME",
+          "valueFrom": "/xrooms/db/username"
+        },
+        {
+          "name": "DB_PASSWORD",
+          "valueFrom": "/xrooms/db/password"
+        }
+      ],
+      "environment": [
+        {
+          "name": "APP_NAME",
+          "value": "2019-aws-xrooms"
+        },
+        {
+          "name": "APP_ENV",
+          "value": "production"
+        },
+        {
+          "name": "APP_DEBUG",
+          "value": "false"
+        },
+        {
+          "name": "APP_URL",
+          "value": "https://qal-dev.work/"
+        },
+        {
+          "name": "LOG_CHANNEL",
+          "value": "ecs"
+        },
+        {
+          "name": "DB_CONNECTION",
+          "value": "mysql"
+        },
+        {
+          "name": "DB_HOST",
+          "value": ""
+        },
+        {
+          "name": "DB_PORT",
+          "value": "3306"
+        },
+        {
+          "name": "DB_DATABASE",
+          "value": "mydatabase"
+        },
+        {
+          "name": "BROADCAST_DRIVER",
+          "value": "log"
+        },
+        {
+          "name": "CACHE_DRIVER",
+          "value": "file"
+        },
+        {
+          "name": "QUEUE_CONNECTION",
+          "value": "sync"
+        },
+        {
+          "name": "SESSION_DRIVER",
+          "value": "database"
+        },
+        {
+          "name": "SESSION_LIFETIME",
+          "value": "10080"
+        },
+        {
+          "name": "REDIS_HOST",
+          "value": "127.0.0.1"
+        },
+        {
+          "name": "REDIS_PASSWORD",
+          "value": ""
+        },
+        {
+          "name": "REDIS_PORT",
+          "value": "6379"
+        }
+      ]
+    },
+    {
+      "name": "nginx",
+      "image": "",
+      "cpu": 128,
+      "memory": 256,
+      "portMappings": [
+        {
+          "containerPort": 80,
+          "hostPort": 80,
+          "protocol": "tcp"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-region": "ap-northeast-1",
+          "awslogs-group": "/xrooms/ecs",
+          "awslogs-stream-prefix": "nginx"
+        }
+      },
+      "environment": [
+        {
+          "name": "PHP_HOST",
+          "value": "127.0.0.1"
+        }
+      ]
+    }
+  ],
+  "requiresCompatibilities": [
+    "FARGATE"
+  ],
+  "cpu": "256",
+  "memory": "512",
+  "networkMode": "awsvpc",
+  "executionRoleArn": "arn:aws:iam::818711851313:role/xrooms-TaskExecution"
+}

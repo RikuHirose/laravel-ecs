@@ -1,0 +1,75 @@
+version: 2.1
+
+orbs:
+  aws-ecr: circleci/aws-ecr@6.15
+  aws-ecs: circleci/aws-ecs@2.1.0
+  aws-cli: circleci/aws-cli@2.0
+
+jobs:
+  build-app-service:
+    docker:
+      - image: cimg/node:14.16.1
+    steps:
+      - checkout
+      - run:
+          working_directory: backend
+          name: npm install
+          command: npm install
+      - run:
+          working_directory: backend
+          name: npm build
+          command: npm run production
+      # - persist_to_workspace:
+      #     root: .
+      #     paths:
+      #       - .
+
+  push-app-service:
+    executor: aws-ecr/default
+    steps:
+      # - attach_workspace:
+      #     at: .
+      - aws-ecr/build-and-push-image:
+          create-repo: true
+          dockerfile: docker/php/Dockerfile
+          checkout: true
+          path: .
+          repo: laravel-ecs_app
+          tag: "latest"
+          # tag: "${CIRCLE_SHA1}"
+
+workflows:
+  build-and-deploy:
+    jobs:
+      - build-app-service:
+          filters:
+              branches:
+                  only:
+                      - master
+      - push-app-service:
+          requires:
+              - build-app-service
+          filters:
+              branches:
+                  only:
+                      - master
+      - aws-ecr/build-and-push-image:
+          name: push-web-service
+          create-repo: true
+          dockerfile: docker/nginx/Dockerfile
+          path: .
+          repo: laravel-ecs_nginx
+          filters:
+            branches:
+              only:
+                - master
+      - aws-ecs/deploy-service-update:
+          container-image-name-updates: "container=app,image-and-tag=${AWS_ECR_ACCOUNT_URL}/laravel-ecs_app:latest"
+          # container-image-name-updates: "container=app,image-and-tag=${AWS_ECR_ACCOUNT_URL}/laravel-ecs_app:${CIRCLE_SHA1}"
+          cluster-name: laravel-ecs-production
+          service-name: laravel-ecs-production
+          family: laravel-ecs-production
+          filters:
+            branches:
+              only:
+                - master

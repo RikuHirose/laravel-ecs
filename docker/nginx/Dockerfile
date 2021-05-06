@@ -1,5 +1,6 @@
+FROM node:14.2-alpine as node
 FROM nginx:1.18-alpine
-LABEL maintainer="hanadev <hanadev@gaogao.asia>"
+LABEL maintainer="ucan-lab <yes@u-can.pro>"
 SHELL ["/bin/ash", "-oeux", "pipefail", "-c"]
 
 ENV TZ=UTC
@@ -9,39 +10,24 @@ RUN apk update && \
 
 ENV PHP_HOST=127.0.0.1
 
-# RUN apt-get update && apt install -y \
-#   zlib1g-dev \
-#   libssl-dev \
-#   libreadline-dev \
-#   libsqlite3-dev \
-#   libbz2-dev \
-#   libncurses5-dev \
-#   libgdbm-dev \
-#   liblzma-dev \
-#   tk-dev zlibc \
-#   libffi-dev \
-#   zip \
-#   unzip \
-#   && apt-get clean \
-#   && curl https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz | tar zx -C /usr/local/src/ \
-#   && cd /usr/local/src/Python-3.7.5 \
-#   && ./configure \
-#   && make && make install \
-#   && ln -s /usr/local/bin/python3 /usr/local/bin/python
-
-# RUN curl https://s3.ap-southeast-1.amazonaws.com/amazon-ssm-ap-southeast-1/latest/debian_amd64/amazon-ssm-agent.deb -o /tmp/amazon-ssm-agent.deb \
-#   && dpkg -i /tmp/amazon-ssm-agent.deb \
-#   && cp /etc/amazon/ssm/seelog.xml.template /etc/amazon/ssm/seelog.xml
-
+# node command
+COPY --from=node /usr/local/bin /usr/local/bin
+# npm command
+COPY --from=node /usr/local/lib /usr/local/lib
+# yarn command
+COPY --from=node /opt /opt
 # nginx config file
-COPY ./docker/nginx/default.conf.template /etc/nginx/conf.d/default.conf.template
+COPY ./docker/nginx/default.conf /etc/nginx/conf.d/default.conf.template
+COPY ./docker/nginx/gzip.conf /etc/nginx/conf.d/gzip.conf
 
-COPY ./backend /var/www/app
 
-WORKDIR /var/www/app
+COPY ./backend /work/backend
+
+WORKDIR /work/backend
 
 EXPOSE 80
 
 CMD /bin/sh -c 'sed "s/\${PHP_HOST}/${PHP_HOST}/" /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g "daemon off;"'
+
 
 

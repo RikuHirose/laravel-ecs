@@ -1,0 +1,117 @@
+[
+  {
+    "name": "nginx",
+    "image": "${account_id}.dkr.ecr.${region}.amazonaws.com/xrooms_nginx:${tag}",
+    "cpu": 0,
+    "memory": 128,
+    "portMappings": [
+      {
+        "containerPort": 80,
+        "hostPort": 80,
+        "protocol": "tcp"
+      }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-region": "${region}",
+        "awslogs-group": "/${name}/ecs",
+        "awslogs-stream-prefix": "nginx"
+      }
+    }
+  },
+  {
+    "name": "app",
+    "image": "${account_id}.dkr.ecr.${region}.amazonaws.com/xrooms_app:${tag}",
+    "cpu": 0,
+    "memory": 128,
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-region": "${region}",
+        "awslogs-group": "/${name}/ecs",
+        "awslogs-stream-prefix": "app"
+      }
+    },
+    "secrets": [
+      {
+        "name": "APP_KEY",
+        "valueFrom": "/${name}/app/key"
+      },
+      {
+        "name": "DB_USERNAME",
+        "valueFrom": "/${name}/db/username"
+      },
+      {
+        "name": "DB_PASSWORD",
+        "valueFrom": "/${name}/db/password"
+      }
+    ],
+    "environment": [
+      {
+        "name": "APP_NAME",
+        "value": "xrooms"
+      },
+      {
+        "name": "APP_ENV",
+        "value": "production"
+      },
+      {
+        "name": "APP_DEBUG",
+        "value": "false"
+      },
+      {
+        "name": "APP_URL",
+        "value": "https://rikulog.com/"
+      },
+      {
+        "name": "LOG_CHANNEL",
+        "value": "stderr"
+      },
+      {
+        "name": "DB_CONNECTION",
+        "value": "mysql"
+      },
+      {
+        "name": "DB_HOST",
+        "value": "${db_host}"
+      },
+      {
+        "name": "DB_PORT",
+        "value": "3306"
+      },
+      {
+        "name": "DB_DATABASE",
+        "value": "${db_name}"
+      },
+      {
+        "name": "BROADCAST_DRIVER",
+        "value": "log"
+      },
+      {
+        "name": "CACHE_DRIVER",
+        "value": "redis"
+      },
+      {
+        "name": "QUEUE_CONNECTION",
+        "value": "redis"
+      },
+      {
+        "name": "SESSION_DRIVER",
+        "value": "redis"
+      },
+      {
+        "name": "SESSION_LIFETIME",
+        "value": "10080"
+      },
+      {
+        "name": "REDIS_HOST",
+        "value": "${redis_host}"
+      },
+      {
+        "name": "REDIS_PORT",
+        "value": "6379"
+      }
+    ]
+  }
+]
